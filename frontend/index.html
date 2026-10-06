@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DR Screening — Diabetic Retinopathy</title>
+  <meta name="description"
+    content="Diabetic retinopathy screening tool using a vision-language model. For demonstration only — not a clinical tool.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ============================================================
+   DR Screening Dashboard — Dark Glassmorphism Theme
+   ============================================================ */
+
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --bg-glass: rgba(255, 255, 255, 0.04);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.2);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cyan: #22d3ee;
+      --accent-blue: #38bdf8;
+      --accent-purple: #a78bfa;
+      --accent-green: #34d399;
+      --accent-red: #f87171;
+      --accent-amber: #fbbf24;
+      --gradient-primary: linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6);
+      --gradient-referable: linear-gradient(135deg, #ef4444, #f97316);
+      --gradient-safe: linear-gradient(135deg, #10b981, #06b6d4);
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+      --shadow-glow: 0 0 30px rgba(56, 189, 248, 0.15);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ---- Layout ---- */
+    .app {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-glass);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 14, 26, 0.8);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-text span {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .header-badge {
+      font-size: 11px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--accent-amber);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ---- Glass Card ---- */
+    .card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      padding: 32px;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-glow);
+    }
+
+    /* ============================================================
+   UPLOAD SCREEN
+   ============================================================ */
+
+    #upload-screen {
+      max-width: 680px;
+      margin: 60px auto;
+      text-align: center;
+    }
+
+    .upload-hero h2 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .upload-hero h2 .gradient-text {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .upload-hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius);
+      padding: 60px 40px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-glass);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.05);
+      box-shadow: 0 0 40px rgba(6, 182, 212, 0.1);
+    }
+
+    .drop-zone-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      border-radius: 20px;
+      background: rgba(56, 189, 248, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .drop-zone h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .drop-zone p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .drop-zone input[type="file"] {
+      display: none;
+    }
+
+    /* Image preview in upload area */
+    .preview-container {
+      display: none;
+      margin-top: 24px;
+    }
+
+    .preview-container.visible {
+      display: block;
+    }
+
+    .preview-image {
+      max-width: 300px;
+      max-height: 300px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border-glass);
+      margin: 0 auto;
+      display: block;
+    }
+
+    .file-info {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .file-info .file-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 14px 32px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--gradient-primary);
+      color: white;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(56, 189, 248, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    /* ============================================================
+   PROCESSING SCREEN
+   ============================================================ */
+
+    #processing-screen {
+      display: none;
+      max-width: 600px;
+      margin: 80px auto;
+      text-align: center;
+    }
+
+    .processing-animation {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 40px;
+      position: relative;
+    }
+
+    .processing-ring {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid var(--border-glass);
+      border-top: 3px solid var(--accent-cyan);
+      animation: spin 1.2s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .processing-ring::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 3px solid var(--border-glass);
+      border-top: 3px solid var(--accent-purple);
+      animation: spin 2s linear infinite reverse;
+    }
+
+    .processing-steps {
+      list-style: none;
+      text-align: left;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .processing-steps li {
+      padding: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      color: var(--text-muted);
+      transition: var(--transition);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .processing-steps li:last-child {
+      border-bottom: none;
+    }
+
+    .processing-steps li.active {
+      color: var(--accent-cyan);
+      font-weight: 500;
+    }
+
+    .processing-steps li.done {
+      color: var(--accent-green);
+    }
+
+    .step-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      flex-shrink: 0;
+    }
+
+    .processing-steps li.active .step-icon {
+      background: rgba(34, 211, 238, 0.15);
+      border-color: var(--accent-cyan);
+    }
+
+    .processing-steps li.done .step-icon {
+      background: rgba(52, 211, 153, 0.15);
+      border-color: var(--accent-green);
+    }
+
+    /* ============================================================
+   RESULTS SCREEN
+   ============================================================ */
+
+    #results-screen {
+      display: none;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .results-header h2 {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    /* Result summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .summary-card {
+      padding: 24px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      transition: var(--transition);
+    }
+
+    .summary-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    .summary-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .summary-card .value {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .summary-card .sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Grade-specific colors */
+    .grade-0 .value {
+      color: var(--accent-green);
+    }
+
+    .grade-1 .value {
+      color: var(--accent-cyan);
+    }
+
+    .grade-2 .value {
+      color: var(--accent-amber);
+    }
+
+    .grade-3 .value {
+      color: #f97316;
+    }
+
+    .grade-4 .value {
+      color: var(--accent-red);
+    }
+
+    .grade-null .value {
+      color: var(--text-muted);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-referable {
+      background: rgba(248, 113, 113, 0.15);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: var(--accent-red);
+    }
+
+    .badge-non-referable {
+      background: rgba(52, 211, 153, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--accent-green);
+    }
+
+    .badge-inconclusive {
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--accent-amber);
+    }
+
+    .badge-quality-good {
+      background: rgba(52, 211, 153, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--accent-green);
+    }
+
+    .badge-quality-poor {
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--accent-amber);
+    }
+
+    /* Image comparison */
+    .image-comparison {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+
+    .image-comparison h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .comparison-toggle {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 20px;
+      width: fit-content;
+    }
+
+    .toggle-btn {
+      padding: 8px 20px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .toggle-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    .comparison-images {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .comparison-images.side-by-side .img-wrapper {
+      flex: 1;
+      min-width: 200px;
+      max-width: 400px;
+    }
+
+    .comparison-images.single .img-wrapper {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .comparison-images.single .img-wrapper.hidden {
+      display: none;
+    }
+
+    .img-wrapper {
+      position: relative;
+      text-align: center;
+    }
+
+    .img-wrapper img {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-glass);
+    }
+
+    .img-label {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 4px 12px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.5px;
+    }
+
+    /* Confidence bar */
+    .confidence-bar-container {
+      margin-top: 8px;
+    }
+
+    .confidence-bar-bg {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .confidence-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--gradient-primary);
+      transition: width 1s ease;
+    }
+
+    /* Reasoning panel */
+    .reasoning-panel {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+
+    .reasoning-panel h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .findings-list {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .findings-list li {
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      background: rgba(56, 189, 248, 0.05);
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .reasoning-text {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+
+    .reasoning-disclaimer {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Quality details */
+    .quality-details {
+      margin-top: 8px;
+    }
+
+    .quality-reasons {
+      list-style: none;
+      margin-top: 8px;
+    }
+
+    .quality-reasons li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+
+    .quality-reasons li::before {
+      content: "• ";
+      color: var(--accent-amber);
+    }
+
+    /* ---- Footer disclaimers ---- */
+    .disclaimers-section {
+      margin-top: 48px;
+      padding: 24px;
+      background: rgba(251, 191, 36, 0.04);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+      border-radius: var(--radius);
+    }
+
+    .disclaimers-section h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-amber);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .disclaimers-section ul {
+      list-style: none;
+    }
+
+    .disclaimers-section li {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 3px 0;
+      line-height: 1.5;
+    }
+
+    .disclaimers-section li::before {
+      content: "— ";
+      color: var(--accent-amber);
+    }
+
+    /* ---- Error state ---- */
+    .error-card {
+      background: rgba(248, 113, 113, 0.05);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      display: none;
+    }
+
+    .error-card h3 {
+      color: var(--accent-red);
+      margin-bottom: 8px;
+    }
+
+    .error-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* ---- Animations ---- */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .delay-1 {
+      animation-delay: 0.1s;
+      opacity: 0;
+    }
+
+    .delay-2 {
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+
+    .delay-3 {
+      animation-delay: 0.3s;
+      opacity: 0;
+    }
+
+    .delay-4 {
+      animation-delay: 0.4s;
+      opacity: 0;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .header {
+        padding: 16px 20px;
+      }
+
+      .main-container {
+        padding: 24px 16px;
+      }
+
+      .upload-hero h2 {
+        font-size: 28px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .comparison-images {
+        flex-direction: column;
+      }
+
+      .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- ================ HEADER ================ -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">👁</div>
+        <div class="logo-text">
+          <h1>DR Screening</h1>
+          <span>Diabetic Retinopathy Analysis</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <!-- ================ UPLOAD SCREEN ================ -->
+      <section id="upload-screen">
+        <div class="upload-hero">
+          <h2>Analyze <span class="gradient-text">Fundus Images</span> for Diabetic Retinopathy</h2>
+          <p>Upload a retinal fundus photograph to run quality checks, image enhancement, and AI-powered DR grading
+            using a vision-language model.</p>
+        </div>
+
+        <div class="drop-zone card" id="drop-zone">
+          <div class="drop-zone-icon">📷</div>
+          <h3>Drop your fundus image here</h3>
+          <p>or click to browse — JPEG, PNG supported (max 20 MB)</p>
+          <input type="file" id="file-input" accept="image/*">
+        </div>
+
+        <div class="preview-container" id="preview-container">
+          <img class="preview-image" id="preview-image" alt="Preview">
+          <div class="file-info">
+            <span class="file-name" id="file-name"></span>
+            <span id="file-size"></span>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="analyze-btn" disabled>
+            🔬 Analyze Image
+          </button>
+          <button class="btn btn-secondary" id="clear-btn" style="display:none">
+            ✕ Clear
+          </button>
+        </div>
+      </section>
+
+      <!-- ================ PROCESSING SCREEN ================ -->
+      <section id="processing-screen">
+        <div class="processing-animation">
+          <div class="processing-ring"></div>
+        </div>
+        <h2 style="margin-bottom: 32px;">Analyzing Your Image</h2>
+        <ul class="processing-steps">
+          <li id="step-quality" class="active">
+            <span class="step-icon">1</span>
+            Checking image quality…
+          </li>
+          <li id="step-enhance">
+            <span class="step-icon">2</span>
+            Enhancing image (CLAHE)…
+          </li>
+          <li id="step-vlm">
+            <span class="step-icon">3</span>
+            Model Analysing...
+          </li>
+          <li id="step-results">
+            <span class="step-icon">4</span>
+            Preparing results…
+          </li>
+        </ul>
+      </section>
+
+      <!-- ================ ERROR CARD ================ -->
+      <div class="error-card" id="error-card">
+        <h3>⚠ Analysis Failed</h3>
+        <p id="error-message">Something went wrong. Please try again.</p>
+        <div class="btn-group" style="margin-top:20px">
+          <button class="btn btn-primary" onclick="resetToUpload()">Try Again</button>
+        </div>
+      </div>
+
+      <!-- ================ RESULTS SCREEN ================ -->
+      <section id="results-screen">
+        <div class="results-header">
+          <h2>Screening Results</h2>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="report-btn">📄 Download Report</button>
+            <button class="btn btn-secondary" onclick="resetToUpload()">↩ New Analysis</button>
+          </div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="summary-grid">
+          <div class="summary-card animate-in delay-1" id="card-quality">
+            <div class="label">Image Quality</div>
+            <div class="value" id="quality-value"></div>
+            <div class="quality-details" id="quality-details"></div>
+          </div>
+
+          <div class="summary-card animate-in delay-2" id="card-grade">
+            <div class="label">DR Grade</div>
+            <div class="value" id="grade-value"></div>
+            <div class="sub" id="grade-label"></div>
+          </div>
+
+          <div class="summary-card animate-in delay-3" id="card-referable">
+            <div class="label">Referable DR</div>
+            <div class="value" id="referable-value"></div>
+          </div>
+
+          <div class="summary-card animate-in delay-4" id="card-confidence">
+            <div class="label">Model Confidence</div>
+            <div class="value" id="confidence-value"></div>
+            <div class="sub" style="font-size:11px;color:var(--text-muted)">Model-reported, not clinically calibrated
+            </div>
+            <div class="confidence-bar-container">
+              <div class="confidence-bar-bg">
+                <div class="confidence-bar-fill" id="confidence-bar" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image comparison -->
+        <div class="image-comparison animate-in delay-2">
+          <h3>🖼 Image Comparison</h3>
+          <div class="comparison-toggle" id="comparison-toggle">
+            <button class="toggle-btn active" data-mode="side-by-side">Side by Side</button>
+            <button class="toggle-btn" data-mode="original">Original Only</button>
+            <button class="toggle-btn" data-mode="enhanced">Enhanced Only</button>
+          </div>
+          <div class="comparison-images side-by-side" id="comparison-images">
+            <div class="img-wrapper" id="original-wrapper">
+              <span class="img-label">ORIGINAL</span>
+              <img id="original-img" alt="Original fundus image">
+            </div>
+            <div class="img-wrapper" id="enhanced-wrapper">
+              <span class="img-label">ENHANCED (CLAHE)</span>
+              <img id="enhanced-img" alt="Enhanced fundus image">
+            </div>
+          </div>
+        </div>
+
+        <!-- Reasoning panel -->
+        <div class="reasoning-panel animate-in delay-3">
+          <h3>🧠 Why This Result</h3>
+
+          <h4 style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">Key Findings</h4>
+          <ul class="findings-list" id="findings-list"></ul>
+
+          <h4 style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">Model Reasoning</h4>
+          <div class="reasoning-text" id="reasoning-text"></div>
+
+          <p class="reasoning-disclaimer">
+            The reasoning panel reflects the model's stated observations, not a pixel-level attention map or proven
+            causal explanation.
+          </p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+  <script>
+    const API_BASE = '';  // Same origin — served by FastAPI
+
+    // ---- DOM refs ----
+    const uploadScreen = document.getElementById('upload-screen');
+    const processingScreen = document.getElementById('processing-screen');
+    const resultsScreen = document.getElementById('results-screen');
+    const errorCard = document.getElementById('error-card');
+
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const reportBtn = document.getElementById('report-btn');
+
+    let selectedFile = null;
+    let lastResultData = null;
+
+    // ---- File selection ----
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, etc.)');
+        return;
+      }
+
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewContainer.classList.add('visible');
+        fileName.textContent = file.name;
+        fileSize.textContent = ` — ${(file.size / 1024).toFixed(1)} KB`;
+        analyzeBtn.disabled = false;
+        clearBtn.style.display = 'inline-flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    clearBtn.addEventListener('click', () => {
+      selectedFile = null;
+      fileInput.value = '';
+      previewContainer.classList.remove('visible');
+      previewImage.src = '';
+      analyzeBtn.disabled = true;
+      clearBtn.style.display = 'none';
+    });
+
+    // ---- Analysis ----
+    analyzeBtn.addEventListener('click', startAnalysis);
+
+    async function startAnalysis() {
+      if (!selectedFile) return;
+
+      // Show processing screen
+      uploadScreen.style.display = 'none';
+      resultsScreen.style.display = 'none';
+      errorCard.style.display = 'none';
+      processingScreen.style.display = 'block';
+
+      // Animate steps
+      resetProcessingSteps();
+      await animateStep('step-quality', 400);
+      await animateStep('step-enhance', 600);
+      activateStep('step-vlm');
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch(`${API_BASE}/api/analyze`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(err.detail || `Server error (${response.status})`);
+        }
+
+        const data = await response.json();
+        lastResultData = data;
+
+        await animateStep('step-vlm', 300);
+        await animateStep('step-results', 300);
+
+        // Short pause before showing results
+        await sleep(400);
+        showResults(data);
+
+      } catch (error) {
+        processingScreen.style.display = 'none';
+        errorCard.style.display = 'block';
+        document.getElementById('error-message').textContent = error.message;
+      }
+    }
+
+    function resetProcessingSteps() {
+      document.querySelectorAll('.processing-steps li').forEach(li => {
+        li.classList.remove('active', 'done');
+      });
+      document.getElementById('step-quality').classList.add('active');
+    }
+
+    function activateStep(id) {
+      document.querySelectorAll('.processing-steps li').forEach(li => li.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    async function animateStep(id, delay) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          el.classList.remove('active');
+          el.classList.add('done');
+          el.querySelector('.step-icon').textContent = '✓';
+          // Activate next sibling if exists
+          const next = el.nextElementSibling;
+          if (next && next.tagName === 'LI') {
+            next.classList.add('active');
+          }
+          resolve();
+        }, delay);
+      });
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ---- Show Results ----
+    function showResults(data) {
+      processingScreen.style.display = 'none';
+      resultsScreen.style.display = 'block';
+
+      const vlm = data.vlm_result;
+      const quality = data.quality;
+
+      // Quality badge
+      const qualityEl = document.getElementById('quality-value');
+      if (quality.status === 'GOOD') {
+        qualityEl.innerHTML = '<span class="badge badge-quality-good">✓ GOOD</span>';
+      } else {
+        qualityEl.innerHTML = '<span class="badge badge-quality-poor">⚠ POOR QUALITY</span>';
+      }
+
+      // Quality reasons
+      const qualityDetails = document.getElementById('quality-details');
+      if (quality.reasons && quality.reasons.length > 0) {
+        qualityDetails.innerHTML = '<ul class="quality-reasons">' +
+          quality.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('') +
+          '</ul>';
+      } else {
+        qualityDetails.innerHTML = '<p style="font-size:12px;color:var(--text-muted);margin-top:6px">No issues detected</p>';
+      }
+
+      // DR Grade
+      const gradeVal = document.getElementById('grade-value');
+      const gradeLabel = document.getElementById('grade-label');
+      const gradeCard = document.getElementById('card-grade');
+
+      gradeCard.className = 'summary-card animate-in delay-2';
+      if (vlm.dr_grade !== null && vlm.dr_grade !== undefined) {
+        gradeVal.textContent = vlm.dr_grade;
+        gradeLabel.textContent = vlm.grade_label;
+        gradeCard.classList.add(`grade-${vlm.dr_grade}`);
+      } else {
+        gradeVal.textContent = 'N/A';
+        gradeLabel.textContent = 'Inconclusive';
+        gradeCard.classList.add('grade-null');
+      }
+
+      // Referable badge
+      const referableEl = document.getElementById('referable-value');
+      if (vlm.is_referable === true) {
+        referableEl.innerHTML = '<span class="badge badge-referable">🔴 REFERABLE</span>' +
+          '<p style="font-size:12px;color:var(--text-secondary);margin-top:8px">Recommend confirmation by an ophthalmologist</p>';
+      } else if (vlm.is_referable === false) {
+        referableEl.innerHTML = '<span class="badge badge-non-referable">🟢 NON-REFERABLE</span>';
+      } else {
+        referableEl.innerHTML = '<span class="badge badge-inconclusive">⚠ INCONCLUSIVE</span>';
+      }
+
+      // Confidence
+      const confVal = document.getElementById('confidence-value');
+      const confBar = document.getElementById('confidence-bar');
+      const confPct = (vlm.confidence * 100).toFixed(1);
+      confVal.textContent = `${confPct}%`;
+      setTimeout(() => { confBar.style.width = `${confPct}%`; }, 200);
+
+      // Images
+      document.getElementById('original-img').src = `data:image/jpeg;base64,${data.original_image}`;
+      document.getElementById('enhanced-img').src = `data:image/jpeg;base64,${data.enhanced_image}`;
+
+      // Findings
+      const findingsList = document.getElementById('findings-list');
+      if (vlm.key_findings && vlm.key_findings.length > 0) {
+        findingsList.innerHTML = vlm.key_findings
+          .map(f => `<li>${escapeHtml(f)}</li>`)
+          .join('');
+      } else {
+        findingsList.innerHTML = '<li>No specific findings reported</li>';
+      }
+
+      // Reasoning
+      document.getElementById('reasoning-text').textContent = vlm.reasoning || 'No reasoning provided.';
+
+      // VLM error warning
+      if (vlm.error) {
+        const errorNote = document.createElement('p');
+        errorNote.style.cssText = 'color: var(--accent-amber); font-size: 13px; margin-top: 12px;';
+        errorNote.textContent = `⚠ Note: ${vlm.error}`;
+        document.getElementById('reasoning-text').after(errorNote);
+      }
+    }
+
+    // ---- Image comparison toggle ----
+    document.getElementById('comparison-toggle').addEventListener('click', (e) => {
+      if (!e.target.classList.contains('toggle-btn')) return;
+
+      document.querySelectorAll('#comparison-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+
+      const mode = e.target.dataset.mode;
+      const container = document.getElementById('comparison-images');
+      const origWrapper = document.getElementById('original-wrapper');
+      const enhWrapper = document.getElementById('enhanced-wrapper');
+
+      container.className = 'comparison-images';
+      origWrapper.classList.remove('hidden');
+      enhWrapper.classList.remove('hidden');
+
+      if (mode === 'side-by-side') {
+        container.classList.add('side-by-side');
+      } else if (mode === 'original') {
+        container.classList.add('single');
+        enhWrapper.classList.add('hidden');
+      } else if (mode === 'enhanced') {
+        container.classList.add('single');
+        origWrapper.classList.add('hidden');
+      }
+    });
+
+    // ---- Report ----
+    reportBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      reportBtn.disabled = true;
+      reportBtn.textContent = '⏳ Generating…';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch(`${API_BASE}/api/report`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error('Report generation failed');
+
+        const html = await response.text();
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      } catch (error) {
+        alert('Failed to generate report: ' + error.message);
+      } finally {
+        reportBtn.disabled = false;
+        reportBtn.textContent = '📄 Download Report';
+      }
+    });
+
+    // ---- Reset ----
+    function resetToUpload() {
+      resultsScreen.style.display = 'none';
+      processingScreen.style.display = 'none';
+      errorCard.style.display = 'none';
+      uploadScreen.style.display = 'block';
+      lastResultData = null;
+    }
+
+    // ---- Utilities ----
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+
+</html>
